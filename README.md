@@ -1,3 +1,3 @@
 # workflow-test
 
-v2.5.0
+v3.10.11-rc.1
