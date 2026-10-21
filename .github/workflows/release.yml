@@ -1,9 +1,12 @@
+# https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#filter-pattern-cheat-sheet
+
 name: Release Image
 
 on:
   push:
     tags:
-      - v*
+      - 'v[0-9]+.[0-9]+.[0-9]+'               # stable,  ex: v1.2.3
+      - 'v[0-9]+.[0-9]+.[0-9]+-beta.[0-9]+'   # beta,    ex: v1.2.3-beta.1
 
 env:
   image: irhm/workflow-test
@@ -35,8 +38,15 @@ jobs:
         uses: docker/metadata-action@v6.2.0
         with:
           images: |
-            ${{ env.image }}
             ghcr.io/${{ env.image }}
+          flavor: |
+            latest=false
+            prefix=v,onlatest=false
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable=${{ !contains(github.ref_name, '-') }}
+            type=raw,value=beta,enable=${{ contains(github.ref_name, '-beta') }}
 
       - name: tags decided
         run: echo "${{ steps.meta.outputs.tags }}"
@@ -49,8 +59,6 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ${{ steps.meta.outputs.tags }}
             ghcr.io/${{ steps.meta.outputs.tags }}
           labels: |
-            ${{ steps.meta.outputs.labels }}
             ghcr.io/${{ steps.meta.outputs.labels }}
